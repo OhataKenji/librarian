@@ -11,7 +11,7 @@ pip install -e .
 
 2. Install LangGraph CLI:
 ```bash
-pip install -U langgraph-cli
+pip install -U "langgraph-cli[inmem]"
 ```
 
 3. Set up environment variables:
@@ -25,4 +25,4 @@ cp .env.example .env
 langgraph dev
 ```
 
-The server will be available at http://localhost:8123
+The server will be available at http://localhost:2024
