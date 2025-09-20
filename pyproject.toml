@@ -1,7 +1,12 @@
 [project]
 name = "librarian"
 version = "0.1.0"
-description = "Add your description here"
+description = "A LangGraph-powered backend web server for AI agent workflows"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+    "langgraph",
+    "langchain",
+    "langchain-openai",
+    "python-dotenv"
+]
