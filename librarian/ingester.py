@@ -3,6 +3,7 @@ import pathlib
 from typing import Final, Generator
 
 import elasticsearch
+import markitdown
 from elasticsearch import helpers as es_helpers
 
 from librarian import const, logging_util
@@ -25,6 +26,18 @@ def _split(text: str) -> Generator[str, None, None]:
         yield text[i : i + chunk_size]
 
 
+def _extract_chunks(path: pathlib.Path) -> Generator[str, None, None]:
+    # TODO: detect filetype according to its content
+    if path.suffix == ".pdf":
+        md = markitdown.MarkItDown(enable_plugins=True)
+        result = md.convert(path)
+        yield from _split(result.text_content)
+    elif path.suffix == ".txt":
+        yield from _split(path.read_text())
+    else:
+        raise ValueError(f"Unsupported file type: {path.suffix}")
+
+
 def ingest(path: pathlib.Path, elasticsearch_url: str) -> None:
     es_client = elasticsearch.Elasticsearch(elasticsearch_url)
     _ensure_index_exists(es_client)
@@ -36,7 +49,7 @@ def ingest(path: pathlib.Path, elasticsearch_url: str) -> None:
                 "_index": const.ES_INDEX_NAME,
                 "_source": {"file_name": path.name, "content": chunk},
             }
-            for chunk in _split(path.read_text())
+            for chunk in _extract_chunks(path)
         ),
     )
     if errors:
