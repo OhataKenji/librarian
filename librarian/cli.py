@@ -1,11 +1,7 @@
 import argparse
 import pathlib
-from typing import Final
 
-from librarian import agent, ingester
-
-# TODO: make Elasticsearch host configurable
-_ELASTICSEARCH_URL: Final[str] = "http://localhost:9200"
+from librarian import agent, const, ingester
 
 
 def _handle_ask(query: str) -> None:
@@ -17,7 +13,7 @@ def _handle_ask(query: str) -> None:
 
 
 def _handle_ingest(path: pathlib.Path) -> None:
-    ingester.ingest(path, _ELASTICSEARCH_URL)
+    ingester.ingest(path, const.ES_URL)
 
 
 def main() -> None:

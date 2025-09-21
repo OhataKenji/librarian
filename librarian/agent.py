@@ -1,6 +1,7 @@
 import os
 
 import elasticsearch
+from librarian import const
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
 
@@ -11,8 +12,10 @@ _llm = ChatGoogleGenerativeAI(
 
 def _search(query: str) -> str:
     """Search for the given query."""
-    es = elasticsearch.Elasticsearch()
-    res = es.search(index="documents", body={"query": {"match": {"content": query}}})
+    es = elasticsearch.Elasticsearch(const.ES_URL)
+    res = es.search(
+        index=const.ES_INDEX_NAME, body={"query": {"match": {"content": query}}}
+    )
     return res["hits"]["hits"][0]["_source"]["content"]
 
 
