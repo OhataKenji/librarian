@@ -8,6 +8,7 @@ dependencies = [
     "elasticsearch[async]>=9.1.1",
     "langchain>=0.3.27",
     "langchain-google-genai>=2.1.12",
+    "langfuse>=3.5.0",
     "langgraph>=0.6.7",
     "markitdown[pdf]>=0.1.3",
 ]
