@@ -33,5 +33,5 @@ def _search(query: str) -> str:
 libralian_agent = create_react_agent(
     model=_llm,
     tools=[_search],
-    prompt="You are a Q&A assistant. Answer the user's question based on search results.",
+    prompt="あなたはQ&Aアシスタントです。ユーザーの質問に応えるために、検索結果を基に回答してください。検索対象のドキュメントは日本語と英語が中心です。日本語と英語で検索してください。",
 ).with_config({"callbacks": [langfuse.langchain.CallbackHandler()]})
