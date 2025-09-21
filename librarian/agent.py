@@ -3,6 +3,7 @@ import os
 import elasticsearch
 from librarian import const
 from langchain_google_genai import ChatGoogleGenerativeAI
+import langfuse.langchain
 from langgraph.prebuilt import create_react_agent
 from typing import Any
 
@@ -33,4 +34,4 @@ libralian_agent = create_react_agent(
     model=_llm,
     tools=[_search],
     prompt="You are a Q&A assistant. Answer the user's question based on search results.",
-)
+).with_config({"callbacks": [langfuse.langchain.CallbackHandler()]})
