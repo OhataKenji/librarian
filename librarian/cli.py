@@ -6,7 +6,7 @@ from librarian import agent, const, ingester
 
 def _handle_ask(query: str) -> None:
     print(
-        agent.libralian_agent.invoke(
+        agent.get_libralian_agent().invoke(
             {"messages": [{"role": "user", "content": query}]},
         )["messages"][-1].content
     )

@@ -7,6 +7,7 @@ import markitdown
 from elasticsearch import helpers as es_helpers
 
 from librarian import const, logging_util
+from librarian.embedding import get_embedding_model
 
 # TODO: vector search
 # TODO: support PDF, epub
@@ -16,7 +17,24 @@ _LOGGER: Final[logging.Logger] = logging_util.get_logger(__name__)
 
 def _ensure_index_exists(es_client: elasticsearch.Elasticsearch) -> None:
     if not es_client.indices.exists(index=const.ES_INDEX_NAME):
-        es_client.indices.create(index=const.ES_INDEX_NAME)
+        mapping = {
+            "mappings": {
+                "properties": {
+                    "file_name": {"type": "text"},
+                    "content": {"type": "text"},
+                    "content_vector": {
+                        "type": "dense_vector",
+                        "dims": 2048,
+                        "index": True,
+                        "similarity": "cosine"
+                    }
+                }
+            }
+        }
+        es_client.indices.create(index=const.ES_INDEX_NAME, body=mapping)
+        _LOGGER.info(f"Created index {const.ES_INDEX_NAME} with vector mapping")
+    else:
+        _LOGGER.info(f"Index {const.ES_INDEX_NAME} already exists")
 
 
 def _split(text: str) -> Generator[str, None, None]:
@@ -41,17 +59,29 @@ def _extract_chunks(path: pathlib.Path) -> Generator[str, None, None]:
 def ingest(path: pathlib.Path, elasticsearch_url: str) -> None:
     es_client = elasticsearch.Elasticsearch(elasticsearch_url)
     _ensure_index_exists(es_client)
-    success, errors = es_helpers.bulk(
-        es_client,
-        index=const.ES_INDEX_NAME,
-        actions=(
-            {
-                "_index": const.ES_INDEX_NAME,
-                "_source": {"file_name": path.name, "content": chunk},
-            }
-            for chunk in _extract_chunks(path)
-        ),
-    )
+    
+    embedding_model = get_embedding_model()
+    
+    def generate_actions():
+        for chunk in _extract_chunks(path):
+            try:
+                content_vector = embedding_model.encode_document(chunk)
+                yield {
+                    "_index": const.ES_INDEX_NAME,
+                    "_source": {
+                        "file_name": path.name,
+                        "content": chunk,
+                        "content_vector": content_vector
+                    },
+                }
+            except Exception as e:
+                _LOGGER.error(f"Failed to generate embedding for chunk: {e}")
+                yield {
+                    "_index": const.ES_INDEX_NAME,
+                    "_source": {"file_name": path.name, "content": chunk},
+                }
+    
+    success, errors = es_helpers.bulk(es_client, actions=generate_actions())
     if errors:
         _LOGGER.error("Failed to ingest document: %s", errors)
     _LOGGER.info("Successfully ingested document: %s", success)
